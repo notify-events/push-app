@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+        <!-- This is a wide open CSP declaration. To lock this down for production, see below. -->
+        <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-eval' 'unsafe-inline' gap:; style-src 'self' 'unsafe-inline'; media-src *" />
+        <!-- Good default declaration:
+        * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+        * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+        * Disables use of eval() and inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+            * Enable inline JS: add 'unsafe-inline' to default-src
+            * Enable eval(): add 'unsafe-eval' to default-src
+        * Create your own at http://cspisawesome.com
+        -->
+        <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: 'unsafe-inline' https://ssl.gstatic.com; style-src 'self' 'unsafe-inline'; media-src *" /> -->
+
+        <link rel="stylesheet" type="text/css" href="css/bootstrap-reboot.min.css" />
+        <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" />
+        <link rel="stylesheet" type="text/css" href="css/index.css" />
+        <title>Notify.Events</title>
+    </head>
+    <body>
+        <div id="app" class="not-init">
+            <div class="container">
+
+                <div id="preloader" v-if="action === 'preloader'" class="action d-flex justify-content-center align-items-center">
+                    <div class="spinner-border text-secondary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+
+                <div v-if="action === 'channelIndex'" class="action">
+                    <h2>Channels</h2>
+
+                    <ul class="list-group mt-3">
+                        <li class="btn btn-light my-1 text-left text-truncate position-relative" v-for="channel in data.channels" :key="channel.id" v-on:click="messageIndex(channel)">
+                            <span class="unread badge badge-pill badge-danger position-absolute" v-if="channel.unreadCount > 0">{{ channel.unreadCount }}</span>
+                            {{ channel.title }}
+                        </li>
+                    </ul>
+                    <div v-if="data.channels.length === 0">
+                        <p>You haven't subscribed to any channels yet.</p>
+                        <small class="d-block text-muted text-justify">
+                            To start getting notifications, you need to subscribe to the channel first by clicking on the button below.
+                        </small>
+                        <div class="text-center mt-5">
+                            <svg width="16em" height="16em" viewBox="0 0 16 16" class="bi bi-arrow-down text-light" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M4.646 9.646a.5.5 0 0 1 .708 0L8 12.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z"/>
+                                <path fill-rule="evenodd" d="M8 2.5a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-1 0V3a.5.5 0 0 1 .5-.5z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="action === 'messageIndex'" class="action">
+                    <div class="btn-back text-muted" v-on:click="channelIndex">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-compact-left" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M9.224 1.553a.5.5 0 0 1 .223.67L6.56 8l2.888 5.776a.5.5 0 1 1-.894.448l-3-6a.5.5 0 0 1 0-.448l3-6a.5.5 0 0 1 .67-.223z"/>
+                        </svg>
+                    </div>
+
+                    <h2>Messages</h2>
+                    <hr class="mt-0 mb-3">
+                    <div class="float-right">
+                        <button class="btn btn-light btn-sm" v-on:click="channelReadAll(data.channel)">
+                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-check-all text-secondary" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M8.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L2.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093L8.95 4.992a.252.252 0 0 1 .02-.022zm-.92 5.14l.92.92a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 1 0-1.091-1.028L9.477 9.417l-.485-.486-.943 1.179z"/>
+                            </svg>
+                        </button>
+                        <button class="btn btn-light btn-sm" v-on:click="channelUnsubscribe(data.channel)">
+                            <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-trash text-secondary" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <h4 class="text-truncate">{{ data.channel.title }}</h4>
+
+                    <ul class="list-group mt-3">
+                        <li class="btn btn-light my-1 text-left position-relative" v-for="message in data.messages" :key="message.id" v-on:click="messageView(data.channel, message)">
+                            <span class="unread badge badge-pill badge-danger position-absolute" v-if="message.unread">&nbsp;</span>
+                            <div class="text-truncate">{{ message.title }}</div>
+                            <small class="text-muted">{{ message.created_at | moment('l LTS') }}</small>
+                        </li>
+                    </ul>
+                    <div v-if="data.messages.length === 0">
+                        You have no messages yet!
+                    </div>
+                </div>
+
+                <div v-if="action === 'messageView'" class="action">
+                    <div class="btn-back text-muted" v-on:click="messageIndex(data.channel)">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-compact-left" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M9.224 1.553a.5.5 0 0 1 .223.67L6.56 8l2.888 5.776a.5.5 0 1 1-.894.448l-3-6a.5.5 0 0 1 0-.448l3-6a.5.5 0 0 1 .67-.223z"/>
+                        </svg>
+                    </div>
+
+                    <h2>Message</h2>
+                    <hr class="mt-0 mb-3">
+                    <h4 class="text-truncate mb-0">{{ data.message.title }}</h4>
+
+                    <small class="d-block text-muted mb-2">
+                        {{ data.message.created_at | moment('l LTS') }}
+                    </small>
+
+                    <p v-html="data.message.content"></p>
+
+                    <ul class="list-unstyled images">
+                        <li v-for="image in data.message.images">
+                            <a :href="image.url + '?inline=1'" target="_blank">
+                                <img :src="image.url + '?inline=1'" class="border border-primary rounded w-100 p-1 mb-1">
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="list-unstyled files">
+                        <li v-for="file in data.message.files">
+                            <a :href="file.url" target="_blank">
+                                <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-file-earmark" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4 1h5v1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V6h1v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2z"/>
+                                    <path d="M9 4.5V1l5 5h-3.5A1.5 1.5 0 0 1 9 4.5z"/>
+                                </svg>
+                                {{ file.name }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div v-if="action === 'channelSubscribe'" class="action">
+                    <div class="btn-back text-muted" v-on:click="channelIndex">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-compact-left" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M9.224 1.553a.5.5 0 0 1 .223.67L6.56 8l2.888 5.776a.5.5 0 1 1-.894.448l-3-6a.5.5 0 0 1 0-.448l3-6a.5.5 0 0 1 .67-.223z"/>
+                        </svg>
+                    </div>
+
+                    <h2>Subscribe</h2>
+
+                    <div class="form-group">
+                        <label>Channel token</label>
+                        <input type="text" v-model="data.token" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn btn-primary" v-on:click="channelSubscribeSave">Subscribe</button>
+                    </div>
+
+                    <small class="d-block text-muted">
+                        You can get your token in the channel subscription section of the <a href="https://notify.events" target="_blank">Notify.Events</a> service.
+                    </small>
+                </div>
+
+                <div id="settings" v-if="action === 'settings'" class="action">
+                    <div class="btn-back text-muted" v-on:click="channelIndex">
+                        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-compact-left" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" d="M9.224 1.553a.5.5 0 0 1 .223.67L6.56 8l2.888 5.776a.5.5 0 1 1-.894.448l-3-6a.5.5 0 0 1 0-.448l3-6a.5.5 0 0 1 .67-.223z"/>
+                        </svg>
+                    </div>
+
+                    <h2>Settings</h2>
+
+                    <div class="form-group">
+                        <label>Device name</label>
+                        <input type="text" v-model="data.title" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn btn-primary" v-on:click="settingsSave">Save</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="header fixed-top"></div>
+
+            <nav class="footer navbar fixed-bottom navbar-expand-lg navbar-light p-0 bg-light border-top">
+                <ul class="nav nav-justified w-100 h-100">
+                    <li class="nav-item">
+                        <a class="nav-link h-100 d-flex flex-column justify-content-center" v-bind:class="[action === 'preloader' ? 'disabled' : '']" href="#" v-on:click="channelIndex">
+                            <div>
+                                <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-list" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M2.5 11.5A.5.5 0 0 1 3 11h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4A.5.5 0 0 1 3 3h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                                </svg>
+                            </div>
+                            <div>Channels</div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link h-100 d-flex flex-column justify-content-center" v-bind:class="[action === 'preloader' ? 'disabled' : '']" href="#" v-on:click="channelSubscribe">
+                            <div>
+                                <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-plus" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M8 3.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5H4a.5.5 0 0 1 0-1h3.5V4a.5.5 0 0 1 .5-.5z"/>
+                                    <path fill-rule="evenodd" d="M7.5 8a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H8.5V12a.5.5 0 0 1-1 0V8z"/>
+                                </svg>
+                            </div>
+                            <div>Subscribe</div>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link h-100 d-flex flex-column justify-content-center" v-bind:class="[action === 'preloader' ? 'disabled' : '']" href="#" v-on:click="settings">
+                            <div>
+                                <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-gear" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M8.837 1.626c-.246-.835-1.428-.835-1.674 0l-.094.319A1.873 1.873 0 0 1 4.377 3.06l-.292-.16c-.764-.415-1.6.42-1.184 1.185l.159.292a1.873 1.873 0 0 1-1.115 2.692l-.319.094c-.835.246-.835 1.428 0 1.674l.319.094a1.873 1.873 0 0 1 1.115 2.693l-.16.291c-.415.764.42 1.6 1.185 1.184l.292-.159a1.873 1.873 0 0 1 2.692 1.116l.094.318c.246.835 1.428.835 1.674 0l.094-.319a1.873 1.873 0 0 1 2.693-1.115l.291.16c.764.415 1.6-.42 1.184-1.185l-.159-.291a1.873 1.873 0 0 1 1.116-2.693l.318-.094c.835-.246.835-1.428 0-1.674l-.319-.094a1.873 1.873 0 0 1-1.115-2.692l.16-.292c.415-.764-.42-1.6-1.185-1.184l-.291.159A1.873 1.873 0 0 1 8.93 1.945l-.094-.319zm-2.633-.283c.527-1.79 3.065-1.79 3.592 0l.094.319a.873.873 0 0 0 1.255.52l.292-.16c1.64-.892 3.434.901 2.54 2.541l-.159.292a.873.873 0 0 0 .52 1.255l.319.094c1.79.527 1.79 3.065 0 3.592l-.319.094a.873.873 0 0 0-.52 1.255l.16.292c.893 1.64-.902 3.434-2.541 2.54l-.292-.159a.873.873 0 0 0-1.255.52l-.094.319c-.527 1.79-3.065 1.79-3.592 0l-.094-.319a.873.873 0 0 0-1.255-.52l-.292.16c-1.64.893-3.433-.902-2.54-2.541l.159-.292a.873.873 0 0 0-.52-1.255l-.319-.094c-1.79-.527-1.79-3.065 0-3.592l.319-.094a.873.873 0 0 0 .52-1.255l-.16-.292c-.892-1.64.902-3.433 2.541-2.54l.292.159a.873.873 0 0 0 1.255-.52l.094-.319z"/>
+                                    <path fill-rule="evenodd" d="M8 5.754a2.246 2.246 0 1 0 0 4.492 2.246 2.246 0 0 0 0-4.492zM4.754 8a3.246 3.246 0 1 1 6.492 0 3.246 3.246 0 0 1-6.492 0z"/>
+                                </svg>
+                            </div>
+                            <div>Settings</div>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/jquery-3.5.1.min.js"></script>
+        <script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
+        <script type="text/javascript" src="js/moment-with-locales.min.js"></script>
+        <script type="text/javascript" src="js/vue.min.js"></script>
+        <script type="text/javascript" src="js/config.js"></script>
+        <script type="text/javascript" src="js/lib.js"></script>
+        <script type="text/javascript" src="js/app.js"></script>
+    </body>
+</html>
