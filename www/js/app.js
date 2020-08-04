@@ -43,6 +43,8 @@ const app = {
 
                 settings:     app.action.settings,
                 settingsSave: app.action.settingsSave,
+
+                goBack: app.action.goBack,
             },
         });
 
@@ -81,6 +83,8 @@ const app = {
                 });
             });
         });
+
+        document.addEventListener('backbutton', app.action.goBack, false);
     },
 
     notification: {
@@ -164,7 +168,11 @@ const app = {
     action: {
         index: 0,
 
+        backCallback: null,
+
         _start: (load) => {
+            app.action.backCallback = null;
+
             app.vue.action = 'preloader';
 
             const index = ++app.action.index;
@@ -187,10 +195,26 @@ const app = {
             save();
         },
 
+        goBack: () => {
+            if (app.action.backCallback === null) {
+                return false;
+            }
+
+            app.action.backCallback();
+        },
+
         channelIndex: () => {
             app.action._start((render) => {
                 app.api.channelIndex((channels) => {
                     render('channelIndex', () => {
+                        app.action.backCallback = () => {
+                            alert.confirm('Close application', 'Are you sure you want to exit?', (button) => {
+                                if (button === 'ok') {
+                                    navigator.app.exitApp();
+                                }
+                            })
+                        };
+
                         channels.forEach((channel, idx) => {
                             app.read.sync(channel.id, channel.message_ids);
 
@@ -221,6 +245,10 @@ const app = {
             app.action._start((render) => {
                 app.api.messageIndex(channel.id, (messages) => {
                     render('messageIndex', () => {
+                        app.action.backCallback = () => {
+                            app.action.channelIndex();
+                        };
+
                         const message_ids = messages.getColumn('id');
 
                         app.read.sync(channel.id, message_ids);
@@ -245,6 +273,10 @@ const app = {
             app.action._start((render) => {
                 app.api.messageView(message.id, (message) => {
                     render('messageView', () => {
+                        app.action.backCallback = () => {
+                            app.action.messageIndex(channel);
+                        };
+
                         app.read.markAsRead(channel.id, message.id);
 
                         return {
@@ -262,6 +294,10 @@ const app = {
         channelSubscribe: () => {
             app.action._start((render) => {
                 render('channelSubscribe', () => {
+                    app.action.backCallback = () => {
+                        app.action.channelIndex();
+                    };
+
                     return {
                         title: '',
                     };
@@ -301,6 +337,10 @@ const app = {
         settings: () => {
             app.action._start((render) => {
                 render('settings', () => {
+                    app.action.backCallback = () => {
+                        app.action.channelIndex();
+                    };
+
                     return {
                         title: app.settings.title,
                     };
