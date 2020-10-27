@@ -107,12 +107,48 @@ const app = {
 
             if (app.notification.allowPush) {
                 await FCM.createNotificationChannel({
-                    id: 'notification',
-                    name: 'Notification',
+                    id: '1-highest',
+                    name: 'Highest',
                     importance: 'high',
                     visibility: 'public',
                     lights: true,
                     vibration: true
+                });
+
+                await FCM.createNotificationChannel({
+                    id: '2-high',
+                    name: 'High',
+                    importance: 'high',
+                    visibility: 'public',
+                    lights: true,
+                    vibration: true
+                });
+
+                await FCM.createNotificationChannel({
+                    id: '3-normal',
+                    name: 'Normal',
+                    importance: 'default',
+                    visibility: 'public',
+                    lights: true,
+                    vibration: true
+                });
+
+                await FCM.createNotificationChannel({
+                    id: '4-low',
+                    name: 'Low',
+                    importance: 'low',
+                    visibility: 'public',
+                    lights: true,
+                    vibration: true
+                });
+
+                await FCM.createNotificationChannel({
+                    id: '5-lowest',
+                    name: 'Lowest',
+                    importance: 'min',
+                    visibility: 'public',
+                    lights: true,
+                    vibration: false
                 });
 
                 app.settings.token = await FCM.getToken();

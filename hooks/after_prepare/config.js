@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
+const fs     = require('fs');
+const config = process.env.config || "dev";
 
-const rootDir = process.argv[2];
-
-const config = process.env.config || "local";
-
-fs.copyFileSync(rootDir + '/config/' + config + '.js', rootDir + '/www/js/config.js');
+fs.copyFileSync('config/' + config + '.js', 'www/js/config.js');
