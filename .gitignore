@@ -8,4 +8,9 @@ node_modules/
 /plugins/
 /platforms/
 
+# Private
 google-services.json
+build.json
+KEYSTORE.md
+keystore.jks
+upload_certificate.pem
